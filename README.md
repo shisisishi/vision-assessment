@@ -14,7 +14,7 @@ Python + OpenCV 实现。任务一（蓝色灯条识别）见 [`docs/lightbars.m
 | `src/serial_pair.py` | 任务三：用 socat 创建 Linux 虚拟串口对；可选的诊断接收器 |
 | `src/serial_demo.py` | 任务三：**仅诊断**，发送固定值报文检查链路与校验 |
 | `src/print_targets.py` | 生成 AprilTag ID0 与 10x7 棋盘格的打印 SVG |
-| `docs/camera.md` | 摄像头、打印实测尺寸、坐标系示意（待填写实测值） |
+| `docs/camera.md` | 摄像头、打印实测尺寸（黑框 100.0 mm、方格 20.0 mm）、坐标系示意 |
 | `tests/` | `unittest` 单元测试 |
 | `tools/setup_ubuntu.sh` | 创建虚拟环境并安装依赖 |
 | `output/` | 临时输出（已在 `.gitignore` 中忽略）；需提交的结果放到 `results/` 或 `data/` |

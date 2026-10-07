@@ -124,6 +124,6 @@ VideoCapture 逐帧读取 → 颜色分割(HSV) → 形态学(闭运算) → fin
 
 - 太暗的灯条进不了 HSV 掩膜（例如第 400 帧左侧一对）。过曝到接近白色、饱和度很低的灯条中心也可能被截断，再靠闭运算和轻微膨胀补回。
 - 只做单根灯条检测，不做装甲板配对、数字识别或跨帧跟踪。
-- 本次视频验证环境为 Windows + Python 3.13.5 + OpenCV 4.14.0 + NumPy 2.5.3。尚未在 Ubuntu 上实际运行。
+- 手册视频在 Windows（Python 3.13.5、OpenCV 4.14.0、NumPy 2.5.3）上跑通，标记视频在 `results/lightbars/lightbars.mp4`。2026-10-07 又在 Ubuntu 24.04.5（Python 3.12.3、OpenCV 4.14.0、NumPy 2.5.3）上用同一原片跑完全程：1137 帧，748×480，24.992 FPS，平均检测 0.87 ms/帧。
 - 命令需在仓库根目录运行，`src.lightbars` 和 `tests.test_lightbars` 才能被正确导入。
 - 输出编码默认 `mp4v`；若系统缺少该编码器会报输出错误，可在配置中改为 `MJPG` 并使用 `.avi` 扩展名。
