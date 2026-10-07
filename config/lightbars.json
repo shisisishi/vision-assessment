@@ -1,0 +1,32 @@
+{
+  "segmentation": {
+    "method": "hsv",
+    "hsv_lower": [95, 80, 150],
+    "hsv_upper": [130, 255, 255],
+    "b_minus_r_threshold": 60
+  },
+  "morphology": {
+    "final": [
+      {"op": "close", "kernel": [3, 3], "shape": "rect"},
+      {"op": "dilate", "kernel": [2, 2], "shape": "rect"}
+    ],
+    "compare": [
+      {"name": "open_3x3", "steps": [{"op": "open", "kernel": [3, 3], "shape": "rect"}]},
+      {"name": "close_3x3", "steps": [{"op": "close", "kernel": [3, 3], "shape": "rect"}]},
+      {"name": "close_7x7", "steps": [{"op": "close", "kernel": [7, 7], "shape": "rect"}]}
+    ]
+  },
+  "geometry": {
+    "min_area": 10,
+    "min_aspect_ratio": 2.0,
+    "max_aspect_ratio": 35.0,
+    "max_tilt_deg": 40,
+    "min_fill_ratio": 0.4,
+    "max_polygon_vertices": 8,
+    "approx_epsilon_ratio": 0.02
+  },
+  "video": {
+    "fourcc": "mp4v",
+    "fallback_fps": 30
+  }
+}

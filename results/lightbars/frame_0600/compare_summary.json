@@ -1,0 +1,98 @@
+{
+  "frame": 600,
+  "segmentation": {
+    "method": "hsv",
+    "hsv_lower": [
+      95,
+      80,
+      150
+    ],
+    "hsv_upper": [
+      130,
+      255,
+      255
+    ],
+    "b_minus_r_threshold": 60
+  },
+  "variants": [
+    {
+      "name": "raw",
+      "steps": [],
+      "white_pixels": 372,
+      "contours": 5,
+      "lightbars": 4
+    },
+    {
+      "name": "open_3x3",
+      "steps": [
+        {
+          "op": "open",
+          "kernel": [
+            3,
+            3
+          ],
+          "shape": "rect"
+        }
+      ],
+      "white_pixels": 245,
+      "contours": 2,
+      "lightbars": 2
+    },
+    {
+      "name": "close_3x3",
+      "steps": [
+        {
+          "op": "close",
+          "kernel": [
+            3,
+            3
+          ],
+          "shape": "rect"
+        }
+      ],
+      "white_pixels": 377,
+      "contours": 5,
+      "lightbars": 4
+    },
+    {
+      "name": "close_7x7",
+      "steps": [
+        {
+          "op": "close",
+          "kernel": [
+            7,
+            7
+          ],
+          "shape": "rect"
+        }
+      ],
+      "white_pixels": 381,
+      "contours": 5,
+      "lightbars": 4
+    },
+    {
+      "name": "final",
+      "steps": [
+        {
+          "op": "close",
+          "kernel": [
+            3,
+            3
+          ],
+          "shape": "rect"
+        },
+        {
+          "op": "dilate",
+          "kernel": [
+            2,
+            2
+          ],
+          "shape": "rect"
+        }
+      ],
+      "white_pixels": 534,
+      "contours": 5,
+      "lightbars": 4
+    }
+  ]
+}

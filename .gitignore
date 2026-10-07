@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+output/
+.idea/
+.vscode/
+.DS_Store
+tools/wsl/
+update.json
+update.json.xml
+tools/com0com/
+data/calib/capture.mp4
+data/tagpose/capture.mp4
+data/tagpose/capture2.mp4
+data/tagpose/capture3.mp4
