@@ -2,6 +2,7 @@
 import argparse
 import json
 import sys
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -33,12 +34,13 @@ def main():
         if not ok:
             break
         index += 1
+        start = time.perf_counter()
         det = detect(frame, config)
+        elapsed_ms = (time.perf_counter() - start) * 1000
         histogram[len(det.lightbars)] += 1
         if index in selected:
             summaries.append(export_comparison(frame, config, out / f"frame_{index:04}", index))
-            # Contact sheet displays real boxes/counts; timing is available in the output video.
-            panel = annotate(frame, det.lightbars, index, 0)
+            panel = annotate(frame, det.lightbars, index, elapsed_ms)
             panels.append(cv2.resize(panel, (561, 360)))
     cap.release()
     if panels:

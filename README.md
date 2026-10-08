@@ -1,8 +1,88 @@
 # 视觉组招新考核
 
-Python + OpenCV 实现。任务一（蓝色灯条识别）见 [`docs/lightbars.md`](docs/lightbars.md)；本文档覆盖任务0（环境）、任务二（相机标定与 AprilTag 位姿）和任务三（CV1 模拟串口）。
+Python + OpenCV 实现，三个任务全部完成，并在 Ubuntu 24.04.5（WSL2）上实际运行。仓库：https://github.com/shisisishi/vision-assessment
 
-> **当前状态（如实说明）**：任务一已完成，标记视频和对比图在 `results/lightbars/`。任务二标定在 `data/calib/camera.json`（1280×720，重投影误差 2.63 px）。打印尺寸与标称值一致：黑框 100.0 mm，方格 20.0 mm。AprilTag 有三段结果，均用 `--decimate 2.0` 生成：`results/tagpose_live.mp4` 是串口演示用的那段（1560 帧中 1142 帧有效，有倾斜、移出画面再移回）；`results/tagpose_demo.mp4` 里标签离开画面后又出现（1486 帧中 515 帧有效）；`results/tagpose_nearfar.mp4` 里直线距离从 0.126 m 变到 0.281 m（1338 帧中 798 帧有效）。任务三：`src.tagpose --serial COM20` 把任务二逐帧算出的位姿实时发到 COM20，SerialPortAssistant 0.5.35 在 COM21（115200、8N1、无流控）接收。接收日志 `results/serial_assistant_live.log` 共 416 帧，校验全部正确，序号 0–415 连续，和程序记录的发送内容逐行一致，状态为无效 → 有效 → 目标移出画面时无效 → 再次有效。录屏在 `results/serial_assistant_demo.mp4`。Ubuntu 24.04.5（WSL2）上 38 项测试通过，同一段视频 1560 帧中 1143 帧有效。个人远程仓库：https://github.com/shisisishi/vision-assessment 。
+## 成果一览
+
+| 任务 | 结果 | 完整材料 |
+| --- | --- | --- |
+| 任务0 环境 | Ubuntu 24.04.5 + Python 3.12.3 + OpenCV 4.14.0 + pupil-apriltags 1.0.4（tag36h11），38 项测试通过 | [版本记录](#任务0环境) |
+| 任务一 灯条 | 手册视频 1137 帧逐帧处理；每帧框出 2～5 根蓝色灯条，橙红场地灯被排除；检测约 1.3 ms/帧 | [`results/lightbars/`](results/lightbars/)、[`docs/lightbars.md`](docs/lightbars.md) |
+| 任务二 标定 | 自拍 19 张棋盘格（9×6 内角点，方格 20.0 mm），1280×720，重投影误差 2.63 px | [`data/calib/`](data/calib/) |
+| 任务二 位姿 | 打印 tag36h11 ID0，黑框实测 100.0 mm；直线距离 0.126～0.281 m，倾斜 32° 仍可检出 | [`results/tagpose_*.mp4`](results/) |
+| 任务三 串口 | 任务二实时位姿 → COM20 → SerialPortAssistant（COM21，115200/8N1）；430 帧全部校验正确，覆盖出现 → 消失 → 再出现 | [`results/serial_assistant_live.log`](results/serial_assistant_live.log) |
+
+### 任务一：蓝色装甲板灯条
+
+![灯条检测](docs/media/lightbars.gif)
+
+逐帧标注帧号、灯条数量和检测耗时，按原顺序保存为 [`results/lightbars/lightbars.mp4`](results/lightbars/lightbars.mp4)。下图是整段视频里平移、视角变化和上坡片段的抽帧：
+
+![灯条抽帧](docs/media/lightbars_frames.jpg)
+
+处理流程（第 600 帧）：原图 → B/G/R 通道和灰度 → HSV 掩膜 → 三组形态学对比 → 轮廓 → 多边形近似 → 旋转矩形。HSV 只保留 H 95～130、S≥80、V≥150 的发光蓝色；开运算会吃掉细灯条，最终用 3×3 闭运算加 2×2 膨胀。参数依据和每组对比数字见 [`docs/lightbars.md`](docs/lightbars.md)。
+
+![灯条处理流程](docs/media/lightbars_pipeline.jpg)
+
+整段检测数量：4 根 779 帧、3 根 290 帧、2 根 59 帧、5 根 9 帧，没有空帧。
+
+### 任务二：相机标定
+
+![棋盘格角点](docs/media/calib_corners.jpg)
+
+| 项目 | 数值 |
+| --- | --- |
+| 相机 | 红米 24122RKC7C 后置摄像头，经 scrcpy 取 1280×720 画面 |
+| 棋盘格 | 10×7 方格（9×6 内角点），方格实测 20.0 mm |
+| 图片 | 19 张，覆盖不同位置、距离和倾斜方向（[`data/calib/images/`](data/calib/images/)，角点图在 [`data/calib/vis/`](data/calib/vis/)） |
+| 内参 K | fx = 825.45，fy = 813.57，cx = 720.50，cy = 403.15（像素） |
+| 畸变 | k1 = 0.1455，k2 = −0.2906，p1 = 0.0151，p2 = 0.0079，k3 = 0.1716 |
+| 重投影误差 | RMS 2.63 px，单张 1.70～4.13 px |
+
+重投影误差是用标定结果把棋盘格角点投影回图像后，与实际检测角点之间的平均偏差。2.63 px 偏高，原因是打印纸手持拍摄时有弯曲：角点图里最上面一排（红线）明显是弧形。即使对每张图单独做不含镜头模型的平面单应性拟合，残差中位数也有 2.53 px，所以误差主要来自棋盘不平，换角点算法（`findChessboardCornersSB` 为 2.62 px）或剔除最差 3 张（2.31 px）都只能小幅降低。这里保留全部 19 张，没有为压低数字挑图。
+
+### 任务二：AprilTag 位姿
+
+![AprilTag 位姿](docs/media/tagpose.gif)
+
+四格依次是最近、最远、倾斜和目标离开画面时的输出。绿色框为指定 ID0 的四个角点（编号 0～3），红点为中心，坐标轴 X 红、Y 绿、Z 蓝；文字是 R、t、直线距离和 Z 深度：
+
+![位姿关键帧](docs/media/tagpose_frames.jpg)
+
+| 演示 | 内容 | 有效帧 |
+| --- | --- | --- |
+| [`tagpose_live.mp4`](results/tagpose_live.mp4) | 远近、倾斜、整张移出画面再移回，串口演示用的就是这段 | 1142 / 1560 |
+| [`tagpose_nearfar.mp4`](results/tagpose_nearfar.mp4) | 直线距离 0.126 → 0.281 m | 798 / 1338 |
+| [`tagpose_demo.mp4`](results/tagpose_demo.mp4) | 标签离开画面后又出现 | 515 / 1486 |
+
+逐帧结果（检测到的全部 ID、状态、t、距离、rvec、R、发送的报文）在同名 `.csv` 中。
+
+### 任务三：CV1 模拟串口
+
+左边是 `src.tagpose` 实时检测，右边是 SerialPortAssistant 同步收到的报文；标签移出画面、黑框不完整时变成 `valid=0`，移回后恢复：
+
+![串口实时接收](docs/media/serial.gif)
+
+![SerialPortAssistant 设置](docs/media/serial_assistant.png)
+
+接收日志节选（[`results/serial_assistant_live.log`](results/serial_assistant_live.log)，助手「保存到文件」的原始内容）：
+
+```text
+$CV1,218,25608,1,0,-81.7,2.7,204.7,-0.089783,0.097350,-1.561320*07   ← 检测到 ID0
+$CV1,219,25735,1,0,-81.0,1.1,182.2,-0.052867,0.059702,-1.558424*08
+$CV1,220,25874,0,-1,0.0,0.0,0.0,0.000000,0.000000,0.000000*34        ← 标签推出画面上沿，黑框不完整
+...
+$CV1,229,26932,0,-1,0.0,0.0,0.0,0.000000,0.000000,0.000000*3D
+$CV1,230,27072,1,0,-67.1,-24.3,154.4,0.030954,0.040909,-1.529528*37  ← 再次出现
+```
+
+- 430 帧，每帧以真实 CR LF 结尾，XOR 校验全部正确，seq 0～429 连续。
+- 与程序记录的发送内容（`results/tagpose_live.csv` 的 `serial_line` 列）逐行一致。
+- 完整录屏：[`results/serial_assistant_demo.mp4`](results/serial_assistant_demo.mp4)。
+
+---
+
+以下是环境、运行方式、参数和协议的详细说明。
 
 ## 目录结构
 
@@ -210,16 +290,19 @@ python -m unittest discover -s tests -v
 
 2026-10-07 在本机 Windows 上 `python -m unittest discover -s tests -v` 为 38 项全部通过，其中包括 pupil-apriltags 的合成位姿恢复。同日在 Ubuntu 24.04.5 上用 `/opt/vision-venv/bin/python -m unittest discover -s tests -v` 再跑一遍，同样 38 项全部通过。
 
-## 待补充的真实数据与环境
+2026-10-08 改为 `--decimate 2.0` 后两边各重跑一次，仍是 38 项全部通过。
 
-- [x] 灯条标记视频与对比图：`results/lightbars/`
-- [x] 棋盘格原图、`data/calib/camera.json`、角点可视化 `data/calib/vis/`
-- [x] 打印尺寸与标称值一致：黑框 100.0 mm，方格 20.0 mm
-- [x] AprilTag 远近演示：`results/tagpose_nearfar.mp4`，距离 0.126～0.281 m
-- [x] 离开再出现：`results/tagpose_demo.mp4`、`results/tagpose_live.mp4`
-- [x] 串口实时接收：`results/serial_assistant_live.log`（助手导出）、`results/serial_assistant_demo.mp4`（录屏）
-- [x] Ubuntu 24.04.5（WSL2）实际运行，版本表已填写；38 项测试通过
-- [x] 个人远程 Git 仓库：https://github.com/shisisishi/vision-assessment
+## 手册要求的提交材料
+
+| 手册要求 | 文件 |
+| --- | --- |
+| 源码、依赖配置、README | `src/`、`config/lightbars.json`、`requirements.txt`、`tools/setup_ubuntu.sh`、本文件 |
+| 灯条结果视频与对比图 | `results/lightbars/lightbars.mp4`；`results/lightbars/frame_XXXX/`（通道、掩膜、形态学、轮廓、多边形、最终框）；`results/lightbars/verification.json` |
+| AprilTag 打印尺寸 | `prints/tag36h11_id0_100mm.svg`、`prints/chessboard_10x7_20mm.svg`；实测记录在 `docs/camera.md` |
+| 标定图片与参数文件 | `data/calib/images/`（19 张原图）、`data/calib/vis/`（角点图）、`data/calib/camera.json` |
+| 位姿演示 | `results/tagpose_live.mp4`、`results/tagpose_nearfar.mp4`、`results/tagpose_demo.mp4` 及同名 `.csv` |
+| 串口接收演示与日志 | `results/serial_assistant_demo.mp4`、`results/serial_assistant_live.log` |
+
 ## 已知问题
 
 - 任务一已用手册视频验证，说明见 `docs/lightbars.md`。原片在 `C:\Users\33873\Downloads\test_video2..mov`，来自手册百度网盘（提取码 `xik2`），仓库内不重复存放。
@@ -230,6 +313,8 @@ python -m unittest discover -s tests -v
 - 部分摄像头不支持请求的分辨率，此时程序会因分辨率不一致报错，需要按实际分辨率重新采集和标定。
 - 部分串口助手只列出 `/dev/ttyS*`、`/dev/ttyUSB*`，可能需要手动填写 `/dev/pts/N`；WSL 下需确认端口确实可见。
 - 去畸变图像沿用原 K（未调用 `getOptimalNewCameraMatrix`），边缘可能有少量黑边或被裁掉的视野。
+- 标定误差 2.63 px 偏高，主要来自手持打印纸的弯曲（分析见上文「任务二：相机标定」）。贴在硬板上重拍可以进一步降低。
+- Windows 上的 scrcpy 不能把手机画面当成摄像头给 OpenCV 直接读取，所以位姿和串口演示是先用 scrcpy 录下 1280×720 视频，再由 `src.tagpose` 逐帧读取、解算并实时发送。接 USB 摄像头时直接用 `--camera 0`，处理流程不变。
 - 角点重投影误差（CSV `corner_reproj_px`）只是诊断量，不用于判定位姿是否有效。
 - 发送节拍取决于主循环速度；相机读取阻塞时无法保证 10 Hz（手册不考核此项）。
 - 若 pupil-apriltags 的预编译包与所装 numpy 版本不兼容，需要降低 numpy 版本。
