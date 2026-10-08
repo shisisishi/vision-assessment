@@ -145,7 +145,7 @@ def corner_reprojection_error(detection, K, tag_size):
 
 
 class TagPoseEstimator:
-    def __init__(self, calibration, tag_size, quad_decimate=1.0, nthreads=2):
+    def __init__(self, calibration, tag_size, quad_decimate=2.0, nthreads=2):
         try:
             from pupil_apriltags import Detector
         except ImportError as exc:
@@ -393,7 +393,8 @@ def parse_args(argv=None):
     parser.add_argument("--log", help="per-frame CSV log")
     parser.add_argument("--headless", action="store_true", help="no display window")
     parser.add_argument("--max-frames", type=int, help="stop after N frames")
-    parser.add_argument("--decimate", type=float, default=1.0, help="pupil quad_decimate")
+    parser.add_argument("--decimate", type=float, default=2.0,
+                        help="pupil quad_decimate; use integers, 2.5 etc. detect nothing")
     return parser.parse_args(argv)
 
 

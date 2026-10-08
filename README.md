@@ -2,7 +2,7 @@
 
 Python + OpenCV 实现。任务一（蓝色灯条识别）见 [`docs/lightbars.md`](docs/lightbars.md)；本文档覆盖任务0（环境）、任务二（相机标定与 AprilTag 位姿）和任务三（CV1 模拟串口）。
 
-> **当前状态（如实说明）**：任务一已完成，标记视频和对比图在 `results/lightbars/`。任务二标定在 `data/calib/camera.json`（1280×720，重投影误差 2.63 px）。打印尺寸与标称值一致：黑框 100.0 mm，方格 20.0 mm。AprilTag 有两段结果：`results/tagpose_demo.mp4` 里标签离开画面后又出现；`results/tagpose_nearfar.mp4` 里直线距离从 0.138 m 变到 0.281 m，1338 帧中 556 帧有效。任务三代码和协议测试已通过。SerialPortAssistant 0.5.35 打开 COM21（115200、8N1、无流控），收到 `results/cv1_from_nearfar.txt` 的全部报文，导出在 `results/serial_assistant_rx.log`：seq 34 有效，35–38 无效，39 起再次有效。Ubuntu 24.04.5（WSL2）已安装，同一套 38 项测试已通过。个人远程仓库：https://github.com/shisisishi/vision-assessment 。
+> **当前状态（如实说明）**：任务一已完成，标记视频和对比图在 `results/lightbars/`。任务二标定在 `data/calib/camera.json`（1280×720，重投影误差 2.63 px）。打印尺寸与标称值一致：黑框 100.0 mm，方格 20.0 mm。AprilTag 有三段结果，均用 `--decimate 2.0` 生成：`results/tagpose_live.mp4` 是串口演示用的那段（1560 帧中 1142 帧有效，有倾斜、移出画面再移回）；`results/tagpose_demo.mp4` 里标签离开画面后又出现（1486 帧中 515 帧有效）；`results/tagpose_nearfar.mp4` 里直线距离从 0.126 m 变到 0.281 m（1338 帧中 798 帧有效）。任务三：`src.tagpose --serial COM20` 把任务二逐帧算出的位姿实时发到 COM20，SerialPortAssistant 0.5.35 在 COM21（115200、8N1、无流控）接收。接收日志 `results/serial_assistant_live.log` 共 416 帧，校验全部正确，序号 0–415 连续，和程序记录的发送内容逐行一致，状态为无效 → 有效 → 目标移出画面时无效 → 再次有效。录屏在 `results/serial_assistant_demo.mp4`。Ubuntu 24.04.5（WSL2）上 38 项测试通过，同一段视频 1560 帧中 1143 帧有效。个人远程仓库：https://github.com/shisisishi/vision-assessment 。
 
 ## 目录结构
 
@@ -125,7 +125,7 @@ python -m src.tagpose --input some_video.mp4 --calibration data/calib/camera.jso
 | `--log` | 可选，逐帧 CSV（检测 ID、状态、t、距离、rvec、R、发送的报文） |
 | `--headless` | 不显示窗口 |
 | `--max-frames` | 处理帧数上限 |
-| `--decimate` | pupil-apriltags `quad_decimate`，默认 1.0（不降采样） |
+| `--decimate` | pupil-apriltags `quad_decimate`，默认 2.0：先在降采样 2 倍的图上找四边形，角点再回全分辨率细化。取 1.0 时压缩噪声和倾斜造成的模糊会让黑框边缘断开：`capture4` 每 3 帧取 1 帧共 494 帧，1.0 检出 174 帧，2.0 检出 380 帧；两者都检出的帧位姿差中位数 0.01 mm / 0.03°。只用整数，2.5 这类小数倍一帧都检不出 |
 
 每帧流程：
 
@@ -161,6 +161,16 @@ python -m src.serial_demo --port /tmp/cv1_a --mode samples --count 4
 python -m src.tagpose --camera 0 --calibration data/calib/camera.json --tag-size 0.1000 \
     --serial /tmp/cv1_a --log results/tagpose_log.csv
 ```
+
+本机实际跑的是 Windows 链路：HHD 虚拟串口桥 COM20 ↔ COM21，助手打开 COM21。手机摄像头经 scrcpy 先录成 1280×720 视频，`tagpose` 再逐帧读取、解算并按约 10 Hz 发送，助手同时接收：
+
+```powershell
+scrcpy --video-source=camera --camera-id=0 --camera-size=1280x720 --camera-fps=30 --no-audio --record=data/tagpose/capture4.mkv
+python -m src.tagpose --input data/tagpose/capture4.mkv --max-frames 1560 --calibration data/calib/camera.json `
+    --tag-size 0.1000 --serial COM20 --output-video results/tagpose_live.mp4 --log results/tagpose_live.csv
+```
+
+`results/tagpose_live.csv` 的 `serial_line` 列是程序发出的报文，`results/serial_assistant_live.log` 是 SerialPortAssistant「保存到文件」得到的原始接收内容，两者逐行一致。`--max-frames 1560` 去掉了录像结尾约 18 秒的黑屏。
 
 `python -m src.serial_pair listen --port /tmp/cv1_b --log results/rx_check.log` 是可选的诊断接收器，按 CRLF 拆帧并检查校验；它与串口助手不能同时打开 B。**最终接收演示和日志必须来自 COMTool 或 SerialPortAssistant。**
 
@@ -205,16 +215,16 @@ python -m unittest discover -s tests -v
 - [x] 灯条标记视频与对比图：`results/lightbars/`
 - [x] 棋盘格原图、`data/calib/camera.json`、角点可视化 `data/calib/vis/`
 - [x] 打印尺寸与标称值一致：黑框 100.0 mm，方格 20.0 mm
-- [x] AprilTag 远近演示：`results/tagpose_nearfar.mp4`，距离 0.138～0.281 m
-- [x] 离开再出现：`results/tagpose_demo.mp4`；报文摘录 `results/cv1_from_nearfar.txt` 已由串口助手收到，日志在 `results/serial_assistant_rx.log`
+- [x] AprilTag 远近演示：`results/tagpose_nearfar.mp4`，距离 0.126～0.281 m
+- [x] 离开再出现：`results/tagpose_demo.mp4`、`results/tagpose_live.mp4`
+- [x] 串口实时接收：`results/serial_assistant_live.log`（助手导出）、`results/serial_assistant_demo.mp4`（录屏）
 - [x] Ubuntu 24.04.5（WSL2）实际运行，版本表已填写；38 项测试通过
 - [x] 个人远程 Git 仓库：https://github.com/shisisishi/vision-assessment
-- [x] 串口助手接收演示与导出日志：COM20 发送，COM21 由 SerialPortAssistant 接收（有效 → 无效 → 再有效）
-
 ## 已知问题
 
 - 任务一已用手册视频验证，说明见 `docs/lightbars.md`。原片在 `C:\Users\33873\Downloads\test_video2..mov`，来自手册百度网盘（提取码 `xik2`），仓库内不重复存放。
-- 打印尺寸已确认为黑框 100.0 mm、方格 20.0 mm。位姿演示使用红米后置摄像头经 scrcpy 的 1280×720 画面。手机自带相机录的 720×1280 竖屏视频不能套用这份标定。四段原始采集视频留在本机 `data/calib/capture.mp4` 与 `data/tagpose/capture*.mp4`，不放入远程仓库。
+- 打印尺寸已确认为黑框 100.0 mm、方格 20.0 mm。位姿演示使用红米后置摄像头经 scrcpy 的 1280×720 画面。手机自带相机录的 720×1280 竖屏视频不能套用这份标定。原始采集视频留在本机 `data/calib/capture.mp4`、`data/tagpose/capture*.mp4` 与 `data/tagpose/capture4.mkv`，不放入远程仓库。
+- 标签整体移出画面、黑框被画面边缘切掉或贴着画面边缘外面没有白边时检测不到，这是 AprilTag 需要完整黑框和外圈白边才能解码决定的。`detect` 会在去畸变图外补 80 像素白边，只能救黑框正好贴边的情况。`results/cv1_from_nearfar.txt` 与 `tools/send_cv1.sh` 是早期用录好的报文重放、检查助手链路的工具，最终接收日志以实时运行的 `serial_assistant_live.log` 为准。
 - SerialPortAssistant 0.5.35 已安装。COM3–COM6 是蓝牙串口。com0com 3.0 在安全启动下驱动错误码 52，没有可用端口。本机改用带签名的用户态虚拟串口，桥为 COM20 ↔ COM21。助手打开 COM21，发送端写 COM20。
 - Ubuntu 24.04.5 装在 `D:\WSL\Ubuntu-24.04`，名称 `Ubuntu-24.04`。启动：`wsl -d Ubuntu-24.04`。依赖在 `/opt/vision-venv`。商店下载「适用于 Linux 的 Windows 子系统 3.0.1」曾停在 87.1%，当时本机 `wsl --version` 已是 3.0.1.0，发行版是从清华镜像的 `ubuntu-24.04.5-wsl-amd64.wsl` 本地安装的。
 - 部分摄像头不支持请求的分辨率，此时程序会因分辨率不一致报错，需要按实际分辨率重新采集和标定。
