@@ -5,14 +5,14 @@
   ],
   "camera_matrix": [
     [
-      825.4547806141043,
+      946.4933979021058,
       0.0,
-      720.5038340127973
+      644.0589118751428
     ],
     [
       0.0,
-      813.5716346919957,
-      403.15066527280345
+      940.1876764091259,
+      370.9133320776034
     ],
     [
       0.0,
@@ -21,90 +21,98 @@
     ]
   ],
   "dist_coeffs": [
-    0.14548202987417302,
-    -0.2906381274381405,
-    0.015057541111387083,
-    0.00792250467350477,
-    0.1715560330265661
+    0.055516338448434156,
+    -0.4982898598369577,
+    0.008110665509197609,
+    0.0006398978515079063,
+    0.7338619535315628
   ],
   "dist_model": "OpenCV k1,k2,p1,p2,k3",
-  "rms_reprojection_error_px": 2.6325618621575537,
+  "rms_reprojection_error_px": 0.8123070255275658,
   "per_image_rms_px": [
     {
-      "path": "data\\calib\\images\\calib_003.png",
-      "rms_px": 4.1328
+      "path": "data\\calib\\images\\calib_00_frame_0046.png",
+      "rms_px": 0.8807
     },
     {
-      "path": "data\\calib\\images\\calib_004.png",
-      "rms_px": 1.7735
+      "path": "data\\calib\\images\\calib_01_frame_0068.png",
+      "rms_px": 0.8155
     },
     {
-      "path": "data\\calib\\images\\calib_005.png",
-      "rms_px": 1.7942
+      "path": "data\\calib\\images\\calib_02_frame_0094.png",
+      "rms_px": 0.7421
     },
     {
-      "path": "data\\calib\\images\\calib_006.png",
-      "rms_px": 1.9669
+      "path": "data\\calib\\images\\calib_03_frame_0180.png",
+      "rms_px": 0.7226
     },
     {
-      "path": "data\\calib\\images\\calib_007.png",
-      "rms_px": 1.892
+      "path": "data\\calib\\images\\calib_04_frame_0244.png",
+      "rms_px": 0.797
     },
     {
-      "path": "data\\calib\\images\\calib_008.png",
-      "rms_px": 2.978
+      "path": "data\\calib\\images\\calib_05_frame_0374.png",
+      "rms_px": 0.7659
     },
     {
-      "path": "data\\calib\\images\\calib_009.png",
-      "rms_px": 3.5098
+      "path": "data\\calib\\images\\calib_06_frame_0444.png",
+      "rms_px": 0.8038
     },
     {
-      "path": "data\\calib\\images\\calib_010.png",
-      "rms_px": 2.6145
+      "path": "data\\calib\\images\\calib_07_frame_0538.png",
+      "rms_px": 0.8087
     },
     {
-      "path": "data\\calib\\images\\calib_011.png",
-      "rms_px": 2.0444
+      "path": "data\\calib\\images\\calib_08_frame_0732.png",
+      "rms_px": 0.8157
     },
     {
-      "path": "data\\calib\\images\\calib_012.png",
-      "rms_px": 1.6975
+      "path": "data\\calib\\images\\calib_09_frame_0762.png",
+      "rms_px": 0.7997
     },
     {
-      "path": "data\\calib\\images\\calib_013.png",
-      "rms_px": 1.7131
+      "path": "data\\calib\\images\\calib_10_frame_0792.png",
+      "rms_px": 0.8503
     },
     {
-      "path": "data\\calib\\images\\calib_014.png",
-      "rms_px": 2.2118
+      "path": "data\\calib\\images\\calib_11_frame_0816.png",
+      "rms_px": 0.9031
     },
     {
-      "path": "data\\calib\\images\\calib_015.png",
-      "rms_px": 2.3283
+      "path": "data\\calib\\images\\calib_12_frame_1084.png",
+      "rms_px": 0.5119
     },
     {
-      "path": "data\\calib\\images\\calib_016.png",
-      "rms_px": 3.0315
+      "path": "data\\calib\\images\\calib_13_frame_1120.png",
+      "rms_px": 0.5726
     },
     {
-      "path": "data\\calib\\images\\calib_017.png",
-      "rms_px": 3.8883
+      "path": "data\\calib\\images\\calib_14_frame_1164.png",
+      "rms_px": 0.7079
     },
     {
-      "path": "data\\calib\\images\\calib_018.png",
-      "rms_px": 2.7656
+      "path": "data\\calib\\images\\calib_15_frame_1192.png",
+      "rms_px": 0.656
     },
     {
-      "path": "data\\calib\\images\\calib_019.png",
-      "rms_px": 2.1718
+      "path": "data\\calib\\images\\calib_16_frame_1232.png",
+      "rms_px": 0.6514
     },
     {
-      "path": "data\\calib\\images\\calib_020.png",
-      "rms_px": 2.4676
+      "path": "data\\calib\\images\\calib_17_frame_1320.png",
+      "rms_px": 1.1021
     },
     {
-      "path": "data\\calib\\images\\calib_022.png",
-      "rms_px": 3.0739
+      "path": "data\\calib\\images\\calib_18_frame_1386.png",
+      "rms_px": 0.8508
+    },
+    {
+      "path": "data\\calib\\images\\calib_19_frame_1478.png",
+      "rms_px": 1.2018
+    },
+    {
+      "path": "data\\calib\\images\\calib_20_frame_1694.png",
+      "rms_px": 0.8058
     }
   ],
   "board": {
@@ -115,27 +123,29 @@
     "square_size_m": 0.02
   },
   "accepted": [
-    "data\\calib\\images\\calib_003.png",
-    "data\\calib\\images\\calib_004.png",
-    "data\\calib\\images\\calib_005.png",
-    "data\\calib\\images\\calib_006.png",
-    "data\\calib\\images\\calib_007.png",
-    "data\\calib\\images\\calib_008.png",
-    "data\\calib\\images\\calib_009.png",
-    "data\\calib\\images\\calib_010.png",
-    "data\\calib\\images\\calib_011.png",
-    "data\\calib\\images\\calib_012.png",
-    "data\\calib\\images\\calib_013.png",
-    "data\\calib\\images\\calib_014.png",
-    "data\\calib\\images\\calib_015.png",
-    "data\\calib\\images\\calib_016.png",
-    "data\\calib\\images\\calib_017.png",
-    "data\\calib\\images\\calib_018.png",
-    "data\\calib\\images\\calib_019.png",
-    "data\\calib\\images\\calib_020.png",
-    "data\\calib\\images\\calib_022.png"
+    "data\\calib\\images\\calib_00_frame_0046.png",
+    "data\\calib\\images\\calib_01_frame_0068.png",
+    "data\\calib\\images\\calib_02_frame_0094.png",
+    "data\\calib\\images\\calib_03_frame_0180.png",
+    "data\\calib\\images\\calib_04_frame_0244.png",
+    "data\\calib\\images\\calib_05_frame_0374.png",
+    "data\\calib\\images\\calib_06_frame_0444.png",
+    "data\\calib\\images\\calib_07_frame_0538.png",
+    "data\\calib\\images\\calib_08_frame_0732.png",
+    "data\\calib\\images\\calib_09_frame_0762.png",
+    "data\\calib\\images\\calib_10_frame_0792.png",
+    "data\\calib\\images\\calib_11_frame_0816.png",
+    "data\\calib\\images\\calib_12_frame_1084.png",
+    "data\\calib\\images\\calib_13_frame_1120.png",
+    "data\\calib\\images\\calib_14_frame_1164.png",
+    "data\\calib\\images\\calib_15_frame_1192.png",
+    "data\\calib\\images\\calib_16_frame_1232.png",
+    "data\\calib\\images\\calib_17_frame_1320.png",
+    "data\\calib\\images\\calib_18_frame_1386.png",
+    "data\\calib\\images\\calib_19_frame_1478.png",
+    "data\\calib\\images\\calib_20_frame_1694.png"
   ],
   "rejected": [],
   "opencv_version": "4.14.0",
-  "created_at": "2026-10-07T16:34:46"
+  "created_at": "2026-10-08T17:52:17"
 }

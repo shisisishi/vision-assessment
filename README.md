@@ -8,9 +8,9 @@ Python + OpenCV 实现，三个任务全部完成，并在 Ubuntu 24.04.5（WSL2
 | --- | --- | --- |
 | 任务0 环境 | Ubuntu 24.04.5 + Python 3.12.3 + OpenCV 4.14.0 + pupil-apriltags 1.0.4（tag36h11），38 项测试通过 | [版本记录](#任务0环境) |
 | 任务一 灯条 | 手册视频 1137 帧逐帧处理；每帧框出 2～5 根蓝色灯条，橙红场地灯被排除；检测约 1.3 ms/帧 | [`results/lightbars/`](results/lightbars/)、[`docs/lightbars.md`](docs/lightbars.md) |
-| 任务二 标定 | 自拍 19 张棋盘格（9×6 内角点，方格 20.0 mm），1280×720，重投影误差 2.63 px | [`data/calib/`](data/calib/) |
-| 任务二 位姿 | 打印 tag36h11 ID0，黑框实测 100.0 mm；直线距离 0.126～0.281 m，倾斜 32° 仍可检出 | [`results/tagpose_*.mp4`](results/) |
-| 任务三 串口 | 任务二实时位姿 → COM20 → SerialPortAssistant（COM21，115200/8N1）；430 帧全部校验正确，覆盖出现 → 消失 → 再出现 | [`results/serial_assistant_live.log`](results/serial_assistant_live.log) |
+| 任务二 标定 | 自拍 21 张棋盘格（9×6 内角点，方格 20.0 mm），1280×720，重投影误差 0.81 px | [`data/calib/`](data/calib/) |
+| 任务二 位姿 | 打印 tag36h11 ID0，黑框实测 100.0 mm；直线距离 0.143～0.321 m，倾斜 37° 仍可检出 | [`results/tagpose_*.mp4`](results/) |
+| 任务三 串口 | 任务二实时位姿 → COM20 → SerialPortAssistant（COM21，115200/8N1）；490 帧全部校验正确，覆盖出现 → 消失 → 再出现 | [`results/serial_assistant_live.log`](results/serial_assistant_live.log) |
 
 ### 任务一：蓝色装甲板灯条
 
@@ -34,12 +34,14 @@ Python + OpenCV 实现，三个任务全部完成，并在 Ubuntu 24.04.5（WSL2
 | --- | --- |
 | 相机 | 红米 24122RKC7C 后置摄像头，经 scrcpy 取 1280×720 画面 |
 | 棋盘格 | 10×7 方格（9×6 内角点），方格实测 20.0 mm |
-| 图片 | 19 张，覆盖不同位置、距离和倾斜方向（[`data/calib/images/`](data/calib/images/)，角点图在 [`data/calib/vis/`](data/calib/vis/)） |
-| 内参 K | fx = 825.45，fy = 813.57，cx = 720.50，cy = 403.15（像素） |
-| 畸变 | k1 = 0.1455，k2 = −0.2906，p1 = 0.0151，p2 = 0.0079，k3 = 0.1716 |
-| 重投影误差 | RMS 2.63 px，单张 1.70～4.13 px |
+| 图片 | 21 张，覆盖不同位置、距离和倾斜方向（[`data/calib/images/`](data/calib/images/)，角点图在 [`data/calib/vis/`](data/calib/vis/)） |
+| 内参 K | fx = 946.49，fy = 940.19，cx = 644.06，cy = 370.91（像素） |
+| 畸变 | k1 = 0.0555，k2 = −0.4983，p1 = 0.0081，p2 = 0.0006，k3 = 0.7339 |
+| 重投影误差 | RMS 0.81 px，单张 0.51～1.20 px |
 
-重投影误差是用标定结果把棋盘格角点投影回图像后，与实际检测角点之间的平均偏差。2.63 px 偏高，原因是打印纸手持拍摄时有弯曲：角点图里最上面一排（红线）明显是弧形。即使对每张图单独做不含镜头模型的平面单应性拟合，残差中位数也有 2.53 px，所以误差主要来自棋盘不平，换角点算法（`findChessboardCornersSB` 为 2.62 px）或剔除最差 3 张（2.31 px）都只能小幅降低。这里保留全部 19 张，没有为压低数字挑图。
+重投影误差是用标定结果把棋盘格角点投影回图像后，与实际检测角点之间的平均偏差。棋盘平铺在桌面上，用 scrcpy 以 1280×720 录下手机移动的整段视频（2619 帧），再自动挑帧：先丢掉运动模糊的帧（相邻两帧角点平均移动超过 4 px），然后按棋盘在画面中的位置、大小和倾斜方向，贪心地挑出彼此差异最大的 22 张（[`tools/select_calib_frames.py`](tools/select_calib_frames.py)）。第一次标定后，去掉单张误差超过中位数 1.5 倍的 1 张（第 1504 帧），用剩下的 21 张重新标定得到上表。
+
+最早一版用手持打印纸拍摄，纸张弯曲导致误差为 2.63 px（单张平面单应性拟合的残差就有 2.53 px）；改为平铺后降到 0.81 px。
 
 ### 任务二：AprilTag 位姿
 
@@ -51,9 +53,9 @@ Python + OpenCV 实现，三个任务全部完成，并在 Ubuntu 24.04.5（WSL2
 
 | 演示 | 内容 | 有效帧 |
 | --- | --- | --- |
-| [`tagpose_live.mp4`](results/tagpose_live.mp4) | 远近、倾斜、整张移出画面再移回，串口演示用的就是这段 | 1142 / 1560 |
-| [`tagpose_nearfar.mp4`](results/tagpose_nearfar.mp4) | 直线距离 0.126 → 0.281 m | 798 / 1338 |
-| [`tagpose_demo.mp4`](results/tagpose_demo.mp4) | 标签离开画面后又出现 | 515 / 1486 |
+| [`tagpose_live.mp4`](results/tagpose_live.mp4) | 远近、倾斜、整张移出画面再移回，串口演示用的就是这段 | 1153 / 1560 |
+| [`tagpose_nearfar.mp4`](results/tagpose_nearfar.mp4) | 直线距离 0.143 → 0.321 m | 794 / 1338 |
+| [`tagpose_demo.mp4`](results/tagpose_demo.mp4) | 标签离开画面后又出现 | 554 / 1486 |
 
 逐帧结果（检测到的全部 ID、状态、t、距离、rvec、R、发送的报文）在同名 `.csv` 中。
 
@@ -68,15 +70,15 @@ Python + OpenCV 实现，三个任务全部完成，并在 Ubuntu 24.04.5（WSL2
 接收日志节选（[`results/serial_assistant_live.log`](results/serial_assistant_live.log)，助手「保存到文件」的原始内容）：
 
 ```text
-$CV1,218,25608,1,0,-81.7,2.7,204.7,-0.089783,0.097350,-1.561320*07   ← 检测到 ID0
-$CV1,219,25735,1,0,-81.0,1.1,182.2,-0.052867,0.059702,-1.558424*08
-$CV1,220,25874,0,-1,0.0,0.0,0.0,0.000000,0.000000,0.000000*34        ← 标签推出画面上沿，黑框不完整
+$CV1,358,43141,1,0,-24.5,-7.9,209.5,-0.220720,0.244458,-1.652759*2E   ← 检测到 ID0
+$CV1,359,43293,1,0,-29.2,-29.8,219.3,-0.157329,0.193723,-1.626261*16
+$CV1,360,43417,0,-1,0.0,0.0,0.0,0.000000,0.000000,0.000000*38          ← 标签推出画面上沿，黑框不完整
 ...
-$CV1,229,26932,0,-1,0.0,0.0,0.0,0.000000,0.000000,0.000000*3D
-$CV1,230,27072,1,0,-67.1,-24.3,154.4,0.030954,0.040909,-1.529528*37  ← 再次出现
+$CV1,369,44527,0,-1,0.0,0.0,0.0,0.000000,0.000000,0.000000*34
+$CV1,370,44636,1,0,-24.3,-33.1,221.7,-0.136260,0.070905,-1.570722*1F   ← 再次出现
 ```
 
-- 430 帧，每帧以真实 CR LF 结尾，XOR 校验全部正确，seq 0～429 连续。
+- 490 帧，每帧以真实 CR LF 结尾，XOR 校验全部正确，seq 0～489 连续。
 - 与程序记录的发送内容（`results/tagpose_live.csv` 的 `serial_line` 列）逐行一致。
 - 完整录屏：[`results/serial_assistant_demo.mp4`](results/serial_assistant_demo.mp4)。
 
@@ -97,6 +99,7 @@ $CV1,230,27072,1,0,-67.1,-24.3,154.4,0.030954,0.040909,-1.529528*37  ← 再次�
 | `docs/camera.md` | 摄像头、打印实测尺寸（黑框 100.0 mm、方格 20.0 mm）、坐标系示意 |
 | `tests/` | `unittest` 单元测试 |
 | `tools/setup_ubuntu.sh` | 创建虚拟环境并安装依赖 |
+| `tools/select_calib_frames.py` | 从标定录像中挑出清晰且姿态差异大的棋盘帧 |
 | `output/` | 临时输出（已在 `.gitignore` 中忽略）；需提交的结果放到 `results/` 或 `data/` |
 
 ## 任务0：环境
@@ -161,6 +164,12 @@ python -m src.calibrate capture --camera 0 --width 1280 --height 720 --out data/
 ```
 
 窗口实时显示角点检测预览；`s` 保存当前**原始帧**（不含叠加标记），`q`/Esc 退出。建议 15～25 张，覆盖画面中部与四边、不同距离和倾斜方向。
+
+也可以先录一段移动棋盘的视频，再自动挑帧（本仓库的标定图就是这样得到的）：
+
+```bash
+python tools/select_calib_frames.py data/calib/capture2.mkv --out data/calib/images --count 22
+```
 
 ### 3. 标定
 
@@ -299,21 +308,20 @@ python -m unittest discover -s tests -v
 | 源码、依赖配置、README | `src/`、`config/lightbars.json`、`requirements.txt`、`tools/setup_ubuntu.sh`、本文件 |
 | 灯条结果视频与对比图 | `results/lightbars/lightbars.mp4`；`results/lightbars/frame_XXXX/`（通道、掩膜、形态学、轮廓、多边形、最终框）；`results/lightbars/verification.json` |
 | AprilTag 打印尺寸 | `prints/tag36h11_id0_100mm.svg`、`prints/chessboard_10x7_20mm.svg`；实测记录在 `docs/camera.md` |
-| 标定图片与参数文件 | `data/calib/images/`（19 张原图）、`data/calib/vis/`（角点图）、`data/calib/camera.json` |
+| 标定图片与参数文件 | `data/calib/images/`（21 张原图）、`data/calib/vis/`（角点图）、`data/calib/camera.json` |
 | 位姿演示 | `results/tagpose_live.mp4`、`results/tagpose_nearfar.mp4`、`results/tagpose_demo.mp4` 及同名 `.csv` |
 | 串口接收演示与日志 | `results/serial_assistant_demo.mp4`、`results/serial_assistant_live.log` |
 
 ## 已知问题
 
 - 任务一已用手册视频验证，说明见 `docs/lightbars.md`。原片在 `C:\Users\33873\Downloads\test_video2..mov`，来自手册百度网盘（提取码 `xik2`），仓库内不重复存放。
-- 打印尺寸已确认为黑框 100.0 mm、方格 20.0 mm。位姿演示使用红米后置摄像头经 scrcpy 的 1280×720 画面。手机自带相机录的 720×1280 竖屏视频不能套用这份标定。原始采集视频留在本机 `data/calib/capture.mp4`、`data/tagpose/capture*.mp4` 与 `data/tagpose/capture4.mkv`，不放入远程仓库。
+- 打印尺寸已确认为黑框 100.0 mm、方格 20.0 mm。位姿演示使用红米后置摄像头经 scrcpy 的 1280×720 画面。手机自带相机录的 720×1280 竖屏视频不能套用这份标定。原始采集视频留在本机 `data/calib/capture2.mkv`、`data/tagpose/capture*.mp4` 与 `data/tagpose/capture4.mkv`，不放入远程仓库。
 - 标签整体移出画面、黑框被画面边缘切掉或贴着画面边缘外面没有白边时检测不到，这是 AprilTag 需要完整黑框和外圈白边才能解码决定的。`detect` 会在去畸变图外补 80 像素白边，只能救黑框正好贴边的情况。`results/cv1_from_nearfar.txt` 与 `tools/send_cv1.sh` 是早期用录好的报文重放、检查助手链路的工具，最终接收日志以实时运行的 `serial_assistant_live.log` 为准。
 - SerialPortAssistant 0.5.35 已安装。COM3–COM6 是蓝牙串口。com0com 3.0 在安全启动下驱动错误码 52，没有可用端口。本机改用带签名的用户态虚拟串口，桥为 COM20 ↔ COM21。助手打开 COM21，发送端写 COM20。
 - Ubuntu 24.04.5 装在 `D:\WSL\Ubuntu-24.04`，名称 `Ubuntu-24.04`。启动：`wsl -d Ubuntu-24.04`。依赖在 `/opt/vision-venv`。商店下载「适用于 Linux 的 Windows 子系统 3.0.1」曾停在 87.1%，当时本机 `wsl --version` 已是 3.0.1.0，发行版是从清华镜像的 `ubuntu-24.04.5-wsl-amd64.wsl` 本地安装的。
 - 部分摄像头不支持请求的分辨率，此时程序会因分辨率不一致报错，需要按实际分辨率重新采集和标定。
 - 部分串口助手只列出 `/dev/ttyS*`、`/dev/ttyUSB*`，可能需要手动填写 `/dev/pts/N`；WSL 下需确认端口确实可见。
 - 去畸变图像沿用原 K（未调用 `getOptimalNewCameraMatrix`），边缘可能有少量黑边或被裁掉的视野。
-- 标定误差 2.63 px 偏高，主要来自手持打印纸的弯曲（分析见上文「任务二：相机标定」）。贴在硬板上重拍可以进一步降低。
 - Windows 上的 scrcpy 不能把手机画面当成摄像头给 OpenCV 直接读取，所以位姿和串口演示是先用 scrcpy 录下 1280×720 视频，再由 `src.tagpose` 逐帧读取、解算并实时发送。接 USB 摄像头时直接用 `--camera 0`，处理流程不变。
 - 角点重投影误差（CSV `corner_reproj_px`）只是诊断量，不用于判定位姿是否有效。
 - 发送节拍取决于主循环速度；相机读取阻塞时无法保证 10 Hz（手册不考核此项）。
